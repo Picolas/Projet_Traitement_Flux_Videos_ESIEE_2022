@@ -38,7 +38,6 @@ string getFilename(int nbArg, char* arguments[]) {
 cv::VideoCapture loadFrames(string filename) {
     cv::VideoCapture capture(filename);
    
-    cv::Mat frameHsv;
 
     if( !capture.isOpened() )
         throw "Error when reading " + filename;
@@ -64,20 +63,26 @@ int eventKey() {
 
 void frameLoop(cv::VideoCapture capture) {
     cv::Mat frame;
+    cv::Mat frameHsv;
     cv::namedWindow("output", 1);
+    cv::namedWindow("filtre", 2);
     
     cv::setMouseCallback("output", onMouse, &structdata);
     while(capture.isOpened())
     {
+
+        cv::Mat framef;
         capture >> frame;
-        //cv::cvtColor(frameHsv, frame, cv::COLOR_BGR2HSV);
+        cv::cvtColor(frame, frameHsv, cv::COLOR_BGR2HSV);
         img = frame;
-        //cv::inRange(frameHsv, cv::Scalar(24, 125, 168), cv::Scalar(30,255,255), frameHsv);
-        
+        cv::inRange(frameHsv, cv::Scalar(35, 16, 100), cv::Scalar(72, 160, 255), frameHsv);
+        cv::copyTo(frame, framef, frameHsv);
+
         if (frame.empty())
             break;
 
         cv::imshow("output", frame);
+        cv::imshow("filtre", framef);
         
         // Event key principale
         int key = eventKey();
