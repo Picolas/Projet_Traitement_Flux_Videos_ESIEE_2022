@@ -19,6 +19,7 @@ typedef struct
 }st_bits;
 
 
+// Convertie une valeur décimale en bit ( stocké dans un tableau de int[8] )
 void DecToBit(int dec, int* bits) {
 
 	for (int i = 7; i >= 0; i--)
@@ -28,11 +29,12 @@ void DecToBit(int dec, int* bits) {
 			bits[i] = 0;
 		}
 		else {
-			// si la valeur moins 2^i est sup à 0 alors il ne peut pas être soustrait -> 0 à cet emplacement
+			// si la valeur moins 2^i est supérieur à 0 alors on peut le retirer -> 1 à cet emplacement
 			if ((dec - pow(2, i)) > 0) {
 				bits[i] = 1;
 				dec = dec - pow(2, i);
 			}
+			// sinon 0
 			else {
 				bits[i] = 0;
 			}
@@ -41,19 +43,23 @@ void DecToBit(int dec, int* bits) {
 
 }
 
+// Convertie un tableau de bit ( int[8] ) en une valeur décimale
 int BitToDec(int bits[]) {
 
 	int result = 0;
 
+	// Pour chaque bit
 	for (int i = 0; i < 8; i++)
 	{
-		if (bits[i] == 1) result += pow(2, i);
+		// ajoute sa valeur en puissace de 2^i si elle est égale à 1
+		if (bits[i] == 1) result += (int) pow(2, i);
 	}
 
 	return result;
 }
 
-int Hash(int posHiddenbit, int nbLSB) {
+// Calcul le hash pour effectuer la stéganographie
+int Hash(int posHiddenbit, int nbLSB = 4) {
 
 	return posHiddenbit % nbLSB;
 
@@ -73,7 +79,7 @@ st_bits convert(uchar data) {
 			if (2 == i) retour.bit2 = 1;
 			if (1 == i) retour.bit1 = 1;
 			if (0 == i) retour.bit0 = 1;
-			data -= pow(2, i);
+			data -= (int) pow(2, i);
 		}
 		else {
 			if (7 == i) retour.bit7 = 0;
@@ -100,40 +106,24 @@ int main(int argc, char* argv[]) {
 		std::cout << "erreur dans l'appel de l'executable !!" << std::endl;
 		return 0;
 	}
+	// Création des matrices contenant chaque image utilisé pour ce programme
 	cv::Mat img1 = cv::imread(argv[1]);
 	cv::Mat img2 = cv::imread(argv[2]);
 	cv::Mat img2_gray;
 	cv::Mat stegano;
 
-	cv::cvtColor(img2, img2_gray, cv::COLOR_BGR2GRAY);
-
-	// ancien code 
-	/*
-	cv::cvtColor(img2, img2, cv::COLOR_BGR2GRAY);
-	int img2size = img2.total();
-	std::vector<st_bits> img2data;
-	int size[2] = { img2.size[0],img.size[1] };
-	// traitement ici
-	for (int i = 0; i < img2.total(); i++) {
-		uchar data = img2.at<uchar>(i / size[0], i % size[0]);
-		img2data.at(i) = convert(data);
-	}
-
-	cv::imshow("Lena original", img);
-	cv::imshow("Lena stegano", stegano);
-	*/
-
-	// nouveau code
-
 	// copie de lena dans le resultat -> initialise la taille de resultat
 	img1.copyTo(stegano);
+	// crée l'image en niveau de gris à insérer à partir de l'image 2
+	cv::cvtColor(img2, img2_gray, cv::COLOR_BGR2GRAY);
 
+	// Itération pour chaque lignes
 	for (int i = 0; i < img2.rows; i++) {
+		// Itérations pour chaque colonnes
 		for (int j = 0; j < img2.cols; j++) {
 			// récup les valeurs décimals de R G et B pour chaque pixel
 			int valRGB[] = { img1.at<cv::Vec3b>(i, j)[0], img1.at<cv::Vec3b>(i, j)[1], img1.at<cv::Vec3b>(i, j)[2] };
-			int val_img2 = img2.at<cv::int8_t>(i, j);
-			//int valRGB2[] = { img2.at<cv::Vec3b>(i, j)[0], img2.at<cv::Vec3b>(i, j)[1], img2.at<cv::Vec3b>(i, j)[2] };
+			int val_img2 = (int) img2.at<cv::int8_t>(i, j);
 
 			// Récupération des bits de l'image source
 			int R[8], G[8], B[8];
@@ -142,64 +132,56 @@ int main(int argc, char* argv[]) {
 			DecToBit(valRGB[2], B);
 
 			// Récupération des bits de l'image stegano
-			//int R2[8], G2[8], B2[8];
 			int bits[8];
 			DecToBit(val_img2, bits);
 
-			//DecToBit(temp2[0], R2);
-			//DecToBit(temp2[1], G2);
-			//DecToBit(temp2[2], B2);
-
-			// Création des nouveaux bits pour R G et B
-			/*
-			int Rbit[8] = {R2[0], R[1], R[2], R[3], R[4], R[5], R[6], R[7]};
-			int Gbit[8] = { G2[0], G[1], G[2], G[3], G[4], G[5], G[6], G[7] };
-			int Bbit[8] = { B2[0], B[1], B[2], B[3], B[4], B[5], B[6], B[7] };
-			
-			*/
-
+			// Instantiation de tableau permettant de reconstruire chaque couleurs
 			int Rbit[8];
 			int Gbit[8];
 			int Bbit[8];
 
-			for (size_t i = 0; i < 8; i++)
+			// Test si le bit à insérer est :
+			for (int k = 0; k < 8; k++)
 			{
-				if (0 <= i < 3) {
-					int k = Hash(i, 3);
-					for (size_t j = 0; j < 8; j++)
+				// dans la couleur Rouge
+				if (0 <= k < 3) {
+					int h = Hash(k);
+					for (int l = 0; l < 8; l++)
 					{
-						if (j == i) {
-							Rbit[j] = bits[i];
+						if (l == h) {
+							Rbit[l] = bits[k];
 						}
 						else
 						{
-							Rbit[j] = R[j];
+							Rbit[l] = R[l];
 						}
 					}
 				}
-				if (3 <= i < 6) {
-					int k = Hash(i, 3);
-					for (size_t j = 0; j < 8; j++)
+				// dans la couleur Bleu ( Green )
+				if (3 <= k < 6) {
+					int h = Hash(k);
+					for (int l = 0; l < 8; l++)
 					{
-						if (j == i) {
-							Gbit[j] = bits[i];
+						if (l == h) {
+							Gbit[l] = bits[k];
 						}
 						else
 						{
-							Gbit[j] = G[j];
+							Gbit[l] = G[l];
 						}
 					}
 				}
-				if (6 <= i < 8)	{
-					int k = Hash(i, 2);
-					for (size_t j = 0; j < 8; j++)
+				// dans la couleur Bleu
+				if (6 <= k < 8)	{
+					int h = Hash(k);
+					for (int l = 0; l < 8; l++)
 					{
-						if (j == i) {
-							Bbit[j] = bits[i];
+						if (l == h) {
+							Bbit[l] = bits[k];
 						}
 						else
 						{
-							Bbit[j] = B[j];
+							Bbit[l] = B[l];
 						}
 					}
 				}
@@ -226,10 +208,10 @@ int main(int argc, char* argv[]) {
 	cv::imshow("img2_gray", img2_gray);
 	cv::imshow("result", stegano);
 
+	// sauvegarde de l'image sur le stockage de l'ordinateur
 	cv::imwrite("stegano.png", stegano);
 
-	std::cout << "lena size : " << img1.cols * img1.rows << "  et stegano size : " << img2.cols * img2.rows << std::endl;
-
+	// delai afin de pouvoir regarder le résultat du traitement
 	cv::waitKey(0);
 
 
