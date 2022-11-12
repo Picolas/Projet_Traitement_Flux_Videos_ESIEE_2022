@@ -53,6 +53,11 @@ int BitToDec(int bits[]) {
 	return result;
 }
 
+int Hash(int posHiddenbit, int nbLSB) {
+
+	return posHiddenbit % nbLSB;
+
+}
 
 
 st_bits convert(uchar data) {
@@ -97,8 +102,10 @@ int main(int argc, char* argv[]) {
 	}
 	cv::Mat img1 = cv::imread(argv[1]);
 	cv::Mat img2 = cv::imread(argv[2]);
+	cv::Mat img2_gray;
 	cv::Mat stegano;
 
+	cv::cvtColor(img2, img2_gray, cv::COLOR_BGR2GRAY);
 
 	// ancien code 
 	/*
@@ -124,45 +131,104 @@ int main(int argc, char* argv[]) {
 	for (int i = 0; i < img2.rows; i++) {
 		for (int j = 0; j < img2.cols; j++) {
 			// récup les valeurs décimals de R G et B pour chaque pixel
-			int temp[] = { img1.at<cv::Vec3b>(i, j)[0], img1.at<cv::Vec3b>(i, j)[1], img1.at<cv::Vec3b>(i, j)[2] };
-			int temp2[] = { img2.at<cv::Vec3b>(i, j)[0], img2.at<cv::Vec3b>(i, j)[1], img2.at<cv::Vec3b>(i, j)[2] };
+			int valRGB[] = { img1.at<cv::Vec3b>(i, j)[0], img1.at<cv::Vec3b>(i, j)[1], img1.at<cv::Vec3b>(i, j)[2] };
+			int val_img2 = img2.at<cv::int8_t>(i, j);
+			//int valRGB2[] = { img2.at<cv::Vec3b>(i, j)[0], img2.at<cv::Vec3b>(i, j)[1], img2.at<cv::Vec3b>(i, j)[2] };
 
 			// Récupération des bits de l'image source
 			int R[8], G[8], B[8];
-			DecToBit(temp[0], R);
-			DecToBit(temp[1], G);
-			DecToBit(temp[2], B);
+			DecToBit(valRGB[0], R);
+			DecToBit(valRGB[1], G);
+			DecToBit(valRGB[2], B);
 
 			// Récupération des bits de l'image stegano
-			int R2[8], G2[8], B2[8];
-			DecToBit(temp2[0], R2);
-			DecToBit(temp2[1], G2);
-			DecToBit(temp2[2], B2);
+			//int R2[8], G2[8], B2[8];
+			int bits[8];
+			DecToBit(val_img2, bits);
+
+			//DecToBit(temp2[0], R2);
+			//DecToBit(temp2[1], G2);
+			//DecToBit(temp2[2], B2);
 
 			// Création des nouveaux bits pour R G et B
-			int Rbit[8] = { R2[0], R[1], R[2], R[3], R[4], R[5], R[6], R[7] };
+			/*
+			int Rbit[8] = {R2[0], R[1], R[2], R[3], R[4], R[5], R[6], R[7]};
 			int Gbit[8] = { G2[0], G[1], G[2], G[3], G[4], G[5], G[6], G[7] };
 			int Bbit[8] = { B2[0], B[1], B[2], B[3], B[4], B[5], B[6], B[7] };
+			
+			*/
 
-			// Transformation de bits en décimal et affectation de la valeur à chaque couleur
-			int newR = BitToDec(Rbit);
-			stegano.at<cv::Vec3b>(i, j)[0] = newR;
+			int Rbit[8];
+			int Gbit[8];
+			int Bbit[8];
 
-			int newG = BitToDec(Gbit);
-			stegano.at<cv::Vec3b>(i, j)[1] = newG;
+			for (size_t i = 0; i < 8; i++)
+			{
+				if (0 <= i < 3) {
+					int k = Hash(i, 3);
+					for (size_t j = 0; j < 8; j++)
+					{
+						if (j == i) {
+							Rbit[j] = bits[i];
+						}
+						else
+						{
+							Rbit[j] = R[j];
+						}
+					}
+				}
+				if (3 <= i < 6) {
+					int k = Hash(i, 3);
+					for (size_t j = 0; j < 8; j++)
+					{
+						if (j == i) {
+							Gbit[j] = bits[i];
+						}
+						else
+						{
+							Gbit[j] = G[j];
+						}
+					}
+				}
+				if (6 <= i < 8)	{
+					int k = Hash(i, 2);
+					for (size_t j = 0; j < 8; j++)
+					{
+						if (j == i) {
+							Bbit[j] = bits[i];
+						}
+						else
+						{
+							Bbit[j] = B[j];
+						}
+					}
+				}
 
-			int newB = BitToDec(Bbit);
-			stegano.at<cv::Vec3b>(i, j)[2] = newB;
 
+
+				// Transformation de bits en décimal et affectation de la valeur à chaque couleur
+				int newR = BitToDec(Rbit);
+				stegano.at<cv::Vec3b>(i, j)[0] = newR;
+
+				int newG = BitToDec(Gbit);
+				stegano.at<cv::Vec3b>(i, j)[1] = newG;
+
+				int newB = BitToDec(Bbit);
+				stegano.at<cv::Vec3b>(i, j)[2] = newB;
+
+			}
 		}
 	}
 
 	// affichage de chaque image ainsi que l'image finale
 	cv::imshow("image 1", img1);
 	cv::imshow("image 2", img2);
+	cv::imshow("img2_gray", img2_gray);
 	cv::imshow("result", stegano);
 
 	cv::imwrite("stegano.png", stegano);
+
+	std::cout << "lena size : " << img1.cols * img1.rows << "  et stegano size : " << img2.cols * img2.rows << std::endl;
 
 	cv::waitKey(0);
 
