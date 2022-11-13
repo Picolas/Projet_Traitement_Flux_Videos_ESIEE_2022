@@ -96,6 +96,53 @@ st_bits convert(uchar data) {
 
 }
 
+void InsertBitWithHash(int bits[], int Rbit[], int Gbit[], int Bbit[]) {
+
+	// Test si le bit à insérer est :
+	for (int k = 0; k < 8; k++)
+	{
+		// dans la couleur Rouge
+		if (0 <= k < 3) {
+			int h = Hash(k);
+			for (int l = 0; l < 8; l++)
+			{
+				if (l == h) {
+					Rbit[l] = bits[k];
+				}
+			}
+		}
+		// dans la couleur Bleu ( Green )
+		if (3 <= k < 6) {
+			int h = Hash(k);
+			for (int l = 0; l < 8; l++)
+			{
+				if (l == h) {
+					Gbit[l] = bits[k];
+				}
+			}
+		}
+		// dans la couleur Bleu
+		if (6 <= k < 8) {
+			int h = Hash(k);
+			for (int l = 0; l < 8; l++)
+			{
+				if (l == h) {
+					Bbit[l] = bits[k];
+				}
+			}
+		}
+	}
+
+}
+
+void TabCopy(int out[], int in[]) {
+
+	for (int i = 0; i < 8; i++)
+	{
+		out[i] = in[i];
+	}
+
+}
 
 
 
@@ -117,6 +164,19 @@ int main(int argc, char* argv[]) {
 	// crée l'image en niveau de gris à insérer à partir de l'image 2
 	cv::cvtColor(img2, img2_gray, cv::COLOR_BGR2GRAY);
 
+	// Insertion des valeurs de Mat de l'image 2 dans image 1
+
+	// création du offset pour insérer l'image à la suite
+	int offset = 2;
+
+	// insertion des lignes
+	int bits[8];
+	int row = img2.rows;
+	DecToBit(row, bits);
+
+
+
+	// Insertion de l'image 2 dans 1
 	// Itération pour chaque lignes
 	for (int i = 0; i < img2.rows; i++) {
 		// Itérations pour chaque colonnes
@@ -140,7 +200,12 @@ int main(int argc, char* argv[]) {
 			int Gbit[8];
 			int Bbit[8];
 
+			TabCopy(Rbit, R);
+			TabCopy(Gbit, G);
+			TabCopy(Bbit, B);
+
 			// Test si le bit à insérer est :
+			/*
 			for (int k = 0; k < 8; k++)
 			{
 				// dans la couleur Rouge
@@ -186,19 +251,22 @@ int main(int argc, char* argv[]) {
 					}
 				}
 
-
-
-				// Transformation de bits en décimal et affectation de la valeur à chaque couleur
-				int newR = BitToDec(Rbit);
-				stegano.at<cv::Vec3b>(i, j)[0] = newR;
-
-				int newG = BitToDec(Gbit);
-				stegano.at<cv::Vec3b>(i, j)[1] = newG;
-
-				int newB = BitToDec(Bbit);
-				stegano.at<cv::Vec3b>(i, j)[2] = newB;
-
 			}
+			*/
+
+			InsertBitWithHash(bits, Rbit, Gbit, Bbit);
+
+
+			// Transformation de bits en décimal et affectation de la valeur à chaque couleur
+			int newR = BitToDec(Rbit);
+			stegano.at<cv::Vec3b>(i, j)[0] = newR;
+
+			int newG = BitToDec(Gbit);
+			stegano.at<cv::Vec3b>(i, j)[1] = newG;
+
+			int newB = BitToDec(Bbit);
+			stegano.at<cv::Vec3b>(i, j)[2] = newB;
+
 		}
 	}
 
