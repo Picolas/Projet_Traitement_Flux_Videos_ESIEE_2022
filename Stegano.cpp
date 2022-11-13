@@ -96,38 +96,39 @@ st_bits convert(uchar data) {
 
 }
 
+// Insertion des bit dans les bon emplacement via la caclul d'un hash
 void InsertBitWithHash(int bits[], int Rbit[], int Gbit[], int Bbit[]) {
 
 	// Test si le bit à insérer est :
-	for (int k = 0; k < 8; k++)
+	for (int i = 0; i < 8; i++)
 	{
 		// dans la couleur Rouge
-		if (0 <= k < 3) {
-			int h = Hash(k);
-			for (int l = 0; l < 8; l++)
+		if (0 <= i < 3) {
+			int h = Hash(i);
+			for (int j = 0; j < 8; j++)
 			{
-				if (l == h) {
-					Rbit[l] = bits[k];
+				if (j == h) {
+					Rbit[j] = bits[i];
 				}
 			}
 		}
 		// dans la couleur Bleu ( Green )
-		if (3 <= k < 6) {
-			int h = Hash(k);
-			for (int l = 0; l < 8; l++)
+		if (3 <= i < 6) {
+			int h = Hash(i);
+			for (int j = 0; j < 8; j++)
 			{
-				if (l == h) {
-					Gbit[l] = bits[k];
+				if (j == h) {
+					Gbit[j] = bits[i];
 				}
 			}
 		}
 		// dans la couleur Bleu
-		if (6 <= k < 8) {
-			int h = Hash(k);
-			for (int l = 0; l < 8; l++)
+		if (6 <= i < 8) {
+			int h = Hash(i);
+			for (int j = 0; j < 8; j++)
 			{
-				if (l == h) {
-					Bbit[l] = bits[k];
+				if (j == h) {
+					Bbit[j] = bits[i];
 				}
 			}
 		}
@@ -135,12 +136,50 @@ void InsertBitWithHash(int bits[], int Rbit[], int Gbit[], int Bbit[]) {
 
 }
 
+// Copie un tableau dans un autre
 void TabCopy(int out[], int in[]) {
 
 	for (int i = 0; i < 8; i++)
 	{
 		out[i] = in[i];
 	}
+
+}
+
+void SteganoAt(int i, int j, int value, cv::Mat img, cv::Mat result, bool asOffset = false, int offset = 0) {
+
+	// insertion du nombre de lignes
+	int bits[8], Rbit[8], Gbit[8], Bbit[8];
+	DecToBit(value, bits);
+
+	int ValRGB[] = { img.at<cv::Vec3b>(i, j)[0], img.at<cv::Vec3b>(i, j)[1], img.at<cv::Vec3b>(i, j)[2] };
+
+	// Récupération des bits de l'image source
+	int R[8], G[8], B[8];
+	DecToBit(ValRGB[0], R);
+	DecToBit(ValRGB[1], G);
+	DecToBit(ValRGB[2], B);
+
+	// Copy dans le tableau finale
+	TabCopy(Rbit, R);
+	TabCopy(Gbit, B);
+	TabCopy(Bbit, B);
+
+	// insertion de la valeur de row dans lena
+	InsertBitWithHash(bits, Rbit, Gbit, Bbit);
+
+	// Transformation de bits en décimal et affectation de la valeur à chaque couleur
+	int newR = BitToDec(Rbit);
+	if (asOffset) result.at<cv::Vec3b>(i, j - offset)[0] = newR;
+	else result.at<cv::Vec3b>(i, j)[0] = newR;
+
+	int newG = BitToDec(Gbit);
+	if (asOffset) result.at<cv::Vec3b>(i, j - offset)[1] = newG;
+	else result.at<cv::Vec3b>(i, j)[1] = newG;
+
+	int newB = BitToDec(Bbit);
+	if (asOffset) result.at<cv::Vec3b>(i, j - offset)[2] = newB;
+	else result.at<cv::Vec3b>(i, j)[2] = newB;
 
 }
 
@@ -169,103 +208,28 @@ int main(int argc, char* argv[]) {
 	// création du offset pour insérer l'image à la suite
 	int offset = 2;
 
-	// insertion des lignes
-	int bits[8];
+	// offset -> 1 : 
+	// insertion du nombre de lignes
 	int row = img2.rows;
-	DecToBit(row, bits);
+	SteganoAt(0, 0, row, img1, stegano);
 
+
+	// offset -> 2
+	// insertion du nombre de colonnes
+	int col = img2.cols;
+	SteganoAt(0, 0, col, img1, stegano);
 
 
 	// Insertion de l'image 2 dans 1
 	// Itération pour chaque lignes
-	for (int i = 0; i < img2.rows; i++) {
+	for (int i = 0; i < row; i++) {
 		// Itérations pour chaque colonnes
-		for (int j = 0; j < img2.cols; j++) {
+		for (int j = offset; j < col + offset; j++) {
 			// récup les valeurs décimals de R G et B pour chaque pixel
-			int valRGB[] = { img1.at<cv::Vec3b>(i, j)[0], img1.at<cv::Vec3b>(i, j)[1], img1.at<cv::Vec3b>(i, j)[2] };
-			int val_img2 = (int) img2.at<cv::int8_t>(i, j);
+			//int valRGB[] = { img1.at<cv::Vec3b>(i, j)[0], img1.at<cv::Vec3b>(i, j)[1], img1.at<cv::Vec3b>(i, j)[2] };
+			int val_img2 = img2.at<cv::int8_t>(i, j - offset);
 
-			// Récupération des bits de l'image source
-			int R[8], G[8], B[8];
-			DecToBit(valRGB[0], R);
-			DecToBit(valRGB[1], G);
-			DecToBit(valRGB[2], B);
-
-			// Récupération des bits de l'image stegano
-			int bits[8];
-			DecToBit(val_img2, bits);
-
-			// Instantiation de tableau permettant de reconstruire chaque couleurs
-			int Rbit[8];
-			int Gbit[8];
-			int Bbit[8];
-
-			TabCopy(Rbit, R);
-			TabCopy(Gbit, G);
-			TabCopy(Bbit, B);
-
-			// Test si le bit à insérer est :
-			/*
-			for (int k = 0; k < 8; k++)
-			{
-				// dans la couleur Rouge
-				if (0 <= k < 3) {
-					int h = Hash(k);
-					for (int l = 0; l < 8; l++)
-					{
-						if (l == h) {
-							Rbit[l] = bits[k];
-						}
-						else
-						{
-							Rbit[l] = R[l];
-						}
-					}
-				}
-				// dans la couleur Bleu ( Green )
-				if (3 <= k < 6) {
-					int h = Hash(k);
-					for (int l = 0; l < 8; l++)
-					{
-						if (l == h) {
-							Gbit[l] = bits[k];
-						}
-						else
-						{
-							Gbit[l] = G[l];
-						}
-					}
-				}
-				// dans la couleur Bleu
-				if (6 <= k < 8)	{
-					int h = Hash(k);
-					for (int l = 0; l < 8; l++)
-					{
-						if (l == h) {
-							Bbit[l] = bits[k];
-						}
-						else
-						{
-							Bbit[l] = B[l];
-						}
-					}
-				}
-
-			}
-			*/
-
-			InsertBitWithHash(bits, Rbit, Gbit, Bbit);
-
-
-			// Transformation de bits en décimal et affectation de la valeur à chaque couleur
-			int newR = BitToDec(Rbit);
-			stegano.at<cv::Vec3b>(i, j)[0] = newR;
-
-			int newG = BitToDec(Gbit);
-			stegano.at<cv::Vec3b>(i, j)[1] = newG;
-
-			int newB = BitToDec(Bbit);
-			stegano.at<cv::Vec3b>(i, j)[2] = newB;
+			SteganoAt(i, j, val_img2, img1, stegano, true, offset);
 
 		}
 	}
