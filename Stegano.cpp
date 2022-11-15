@@ -59,7 +59,7 @@ void DecToBit(int dec, int* bits) {
 		}
 		else {
 			// si la valeur moins 2^i est supérieur à 0 alors on peut le retirer -> 1 à cet emplacement
-			if ((dec - pow(2, i)) > 0) {
+			if ((dec - pow(2, i)) >= 0) {
 				bits[i] = 1;
 				dec = dec - pow(2, i);
 			}
@@ -73,7 +73,7 @@ void DecToBit(int dec, int* bits) {
 }
 
 // Convertie un tableau de bit ( int[8] ) en une valeur décimale
-int BitToDec(int bits[]) {
+int BitToDec(int* bits) {
 
 	int result = 0;
 
@@ -95,13 +95,13 @@ int Hash(int posHiddenbit, int nbLSB = 4) {
 }
 
 // Insertion des bit dans les bon emplacement via la caclul d'un hash
-void InsertBitWithHash(int bits[], int Rbit[], int Gbit[], int Bbit[]) {
+void InsertBitWithHash(int* bits, int* Rbit, int* Gbit, int* Bbit) {
 
 	// Test si le bit à insérer est :
 	for (int i = 0; i < 8; i++)
 	{
 		// dans la couleur Rouge
-		if (0 <= i < 3) {
+		if (i >= 0 && i < 3) {
 			int h = Hash(i);
 			for (int j = 0; j < 8; j++)
 			{
@@ -111,7 +111,7 @@ void InsertBitWithHash(int bits[], int Rbit[], int Gbit[], int Bbit[]) {
 			}
 		}
 		// dans la couleur Bleu ( Green )
-		if (3 <= i < 6) {
+		if (i >= 3 && i < 6) {
 			int h = Hash(i);
 			for (int j = 0; j < 8; j++)
 			{
@@ -121,7 +121,7 @@ void InsertBitWithHash(int bits[], int Rbit[], int Gbit[], int Bbit[]) {
 			}
 		}
 		// dans la couleur Bleu
-		if (6 <= i < 8) {
+		if (i >= 6 && i < 8) {
 			int h = Hash(i);
 			for (int j = 0; j < 8; j++)
 			{
@@ -135,7 +135,7 @@ void InsertBitWithHash(int bits[], int Rbit[], int Gbit[], int Bbit[]) {
 }
 
 // Copie un tableau dans un autre
-void TabCopy(int out[], int in[]) {
+void TabCopy(int* out, int* in) {
 
 	for (int i = 0; i < 8; i++)
 	{
@@ -175,7 +175,7 @@ void SteganoAt(int i, int j, int value, cv::Mat& img, cv::Mat& result, bool asOf
 	TabCopy(Rbit, R);
 
 	// insertion de la valeur de row dans les bits de couleur de lena
-	InsertBitWithHash(bits, Bbit, Gbit, Rbit);
+	InsertBitWithHash(bits, Rbit, Gbit, Bbit);
 
 	// Transformation de bits en décimal et affectation de la valeur à chaque couleur
 	int newB = BitToDec(Bbit);
@@ -249,23 +249,27 @@ int main(int argc, char* argv[]) {
 
 	// Ajout de la valeur pour les lignes
 	temp = row;
-	for (int i = 2; i <= 2 + rowoffset; i++)
+	for (int i = 2; i < 2 + rowoffset; i++)
 	{
-		if (temp > 255) SteganoAt(0, i, 255, img1, stegano);
-		else {
-			SteganoAt(0, i, temp, img1, stegano);
+		if (temp > 255) {
+			SteganoAt(0, i, 255, img1, stegano);
 			temp -= 255;
+		}
+		else {
+			if(temp > 0) SteganoAt(0, i, temp, img1, stegano);
 		}
 	}
 
 	// Ajout de la valeur pour les colonnes
 	temp = col;
-	for (int i = 2 + coloffset; i <= 2 + coloffset + rowoffset; i++)
+	for (int i = 2 + rowoffset; i < 2 + coloffset + rowoffset; i++)
 	{
-		if (temp > 255) SteganoAt(0, i, 255, img1, stegano);
-		else {
-			SteganoAt(0, i, temp, img1, stegano);
+		if (temp > 255) {
+			SteganoAt(0, i, 255, img1, stegano);
 			temp -= 255;
+		}
+		else {
+			if(temp > 0) SteganoAt(0, i, temp, img1, stegano);
 		}
 	}
 
