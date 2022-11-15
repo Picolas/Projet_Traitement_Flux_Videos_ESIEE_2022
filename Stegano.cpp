@@ -244,8 +244,8 @@ int main(int argc, char* argv[]) {
 	}
 
 	// Ajout des valeurs pour la quantité de lignes et de colonnes
-	SteganoAt(0, 1, rowoffset, img1, stegano);
-	SteganoAt(0, 2, coloffset, img1, stegano);
+	SteganoAt(0, 0, rowoffset, img1, stegano);
+	SteganoAt(0, 1, coloffset, img1, stegano);
 
 	// Ajout de la valeur pour les lignes
 	temp = row;
