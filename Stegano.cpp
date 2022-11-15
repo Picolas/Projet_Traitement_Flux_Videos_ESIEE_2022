@@ -95,7 +95,7 @@ int Hash(int posHiddenbit, int nbLSB = 4) {
 }
 
 // Insertion des bit dans les bon emplacement via la caclul d'un hash
-void InsertBitWithHash(int* bits, int* Rbit, int* Gbit, int* Bbit) {
+void InsertBitWithHash(int* bits, int* Bbit, int* Gbit, int* Rbit) {
 
 	// Test si le bit à insérer est :
 	for (int i = 0; i < 8; i++)
@@ -175,7 +175,7 @@ void SteganoAt(int i, int j, int value, cv::Mat& img, cv::Mat& result, bool asOf
 	TabCopy(Rbit, R);
 
 	// insertion de la valeur de row dans les bits de couleur de lena
-	InsertBitWithHash(bits, Rbit, Gbit, Bbit);
+	InsertBitWithHash(bits, Bbit, Gbit, Rbit);
 
 	// Transformation de bits en décimal et affectation de la valeur à chaque couleur
 	int newB = BitToDec(Bbit);
