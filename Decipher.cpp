@@ -82,14 +82,34 @@ void recupBitWithHash(int bits[], int Bbit[], int Gbit[], int Rbit[]) {
 			for (int j = 0; j < 8; j++)
 			{
 				if (j == h) {
-					bits[j] = Bbit[j];
+					bits[i] = Bbit[j];
 				}
 			}
 		}
 	}
-
 }
 
+int recupDecAt(int i, int j, cv::Mat img) {
+
+	// Recover the bits at 
+	int valBGR[3];
+	valBGR[0] = img.at<cv::Vec3b>(i, j)[0];
+	valBGR[1] = img.at<cv::Vec3b>(i, j)[1];
+	valBGR[2] = img.at<cv::Vec3b>(i, j)[2];
+
+	int bitRecup[8] = { 0 };
+
+	int B[8], G[8], R[8];
+	decToBit(valBGR[0], B);
+	decToBit(valBGR[1], G);
+	decToBit(valBGR[2], R);
+
+	recupBitWithHash(bitRecup, B, G, R);
+
+	int value = bitToDec(bitRecup);
+
+	return value;
+}
 
 int main(int argc, char* argv[]) {
 
@@ -100,57 +120,39 @@ int main(int argc, char* argv[]) {
 
 	cv::Mat source = cv::imread(argv[1]);
 
-	// Recup length of row for the image to decipher
-	int valBGR[3];
-	valBGR[0] = source.at<cv::Vec3b>(0, 0)[0];
-	valBGR[1] = source.at<cv::Vec3b>(0, 0)[1];
-	valBGR[2] = source.at<cv::Vec3b>(0, 0)[2];
+	int offset = 2;
 
-	int bitRecup[8] = {0};
+	int rowOffset = recupDecAt(0, 0, source);
+	int colOffset = recupDecAt(0, 1, source);
 
-	std::cout << " valeur dec R : " << valBGR[2] << std::endl;
+	int row = 0;
+	int col = 0;
 
-	std::cout << " valeur dec G : " << valBGR[1] << std::endl;
-
-	std::cout << " valeur dec B : " << valBGR[0] << std::endl;
-
-	// Récupération des bits de l'image source
-	int B[8], G[8], R[8];
-	decToBit(valBGR[0], B);
-	decToBit(valBGR[1], G);
-	decToBit(valBGR[2], R);
-
-	recupBitWithHash(bitRecup, B, G, R);
-
-	int row = bitToDec(bitRecup);
-
-	std::cout << "valeur de bit pour : ";
-	std::cout << " bitREcup : ";
-	for (int var : bitRecup)
-	{
-		std::cout << " " << var;
+	for (int i = offset; i < offset + rowOffset; i++) {
+		row += recupDecAt(0, i, source);
 	}
-	std::cout << std::endl;
-	std::cout << "R : ";
-	for (int var : R)
-	{
-		std::cout << " " << var;
-	}
-	std::cout << std::endl;
-	std::cout << "G : ";
-	for (int var : G)
-	{
-		std::cout << " " << var;
-	}
-	std::cout << std::endl;
-	std::cout << "B : ";
-	for (int var : B)
-	{
-		std::cout << " " << var;
-	}
-	std::cout << std::endl;
 
-	std::cout << "valeur de rowoffset : " << row << std::endl;
+	for (int i = offset + rowOffset; i < offset + rowOffset + colOffset; i++) {
+		col += recupDecAt(0, i, source);
+	}
+
+	cv::Mat recover = cv::Mat(row, col, CV_8U);
+
+	for (int i = 0; i < row; i++) {
+		if (0 == i) {
+			for (int j = offset + rowOffset + colOffset; j < col; j++) {
+				recover.at<cv::int8_t>(i, j + offset + rowOffset + colOffset) = recupDecAt(i, j + offset + rowOffset + colOffset, source);
+			}
+		}
+		else {
+			for (int j = 0; j < col; j++) {
+				recover.at<cv::int8_t>(i, j) = recupDecAt(i, j, source);
+			}
+		}
+		
+	}
+
+	cv::imshow("recovered image" , recover);
 
 	cv::waitKey(0);
 
