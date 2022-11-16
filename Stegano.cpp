@@ -284,7 +284,11 @@ int main(int argc, char* argv[]) {
 			int val_img2 = img2.at<cv::int8_t>(i, j - offset);
 
 			// effectue la stégano en appelant avec les bon paramaètres la fonction suivante
-			SteganoAt(i, j, val_img2, img1, stegano, true, offset);
+
+			// if i == 0, pas de offset car les valeurs doivent être décalé pour pas écraser les valeurs de Mat rentrer précedemment
+			if (0 == i) SteganoAt(i, j, val_img2, img1, stegano);
+			// else, offset pour remmetre les valeurs à partir du début de l'image
+			else SteganoAt(i, j, val_img2, img1, stegano, true, offset);
 
 		}
 	}
