@@ -65,14 +65,11 @@ void frameLoop(cv::VideoCapture capture) {
     cv::Mat frame;
     cv::Mat frameHsv;
     int fourcc = capture.get(cv::CAP_PROP_FOURCC);
-    int cc1 = fourcc & 255;
-    int cc2 = (fourcc >> 8) & 255;
-    int cc3 = (fourcc >> 16) & 255;
-    int cc4 = (fourcc >> 24) & 255;
-
+   
+    int framerate = capture.get(cv::CAP_PROP_FPS);
     int frame_width = capture.get(cv::CAP_PROP_FRAME_WIDTH);
     int frame_height = capture.get(cv::CAP_PROP_FRAME_HEIGHT);
-    cv::VideoWriter output("choux_filtre.avi", cv::VideoWriter::fourcc(cc1, cc2, cc3, cc4), 30, cv::Size(frame_width, frame_height));
+    cv::VideoWriter output("choux_filtre.avi", cv::VideoWriter::fourcc('M','J','P','G'), framerate, cv::Size(frame_width, frame_height));
     //output.fourcc(cc1, cc2, cc3, cc4);
     cv::namedWindow("output", 1);
     cv::namedWindow("filtre", 2);
@@ -87,11 +84,12 @@ void frameLoop(cv::VideoCapture capture) {
         img = frame;
         cv::inRange(frameHsv, cv::Scalar(35, 16, 100), cv::Scalar(72, 160, 255), frameHsv);
         cv::copyTo(frame, framef, frameHsv);
+        
 
         if (frame.empty())
             break;
 
-        output.write(framef);
+        output<<framef;
 
         cv::imshow("output", frame);
         cv::imshow("filtre", framef);
