@@ -49,7 +49,7 @@ st_bits convert(uchar data) {
 
 
 // Convertie une valeur décimale en bit ( stocké dans un tableau de int[8] )
-void DecToBit(int dec, int* bits) {
+void decToBit(int dec, int* bits) {
 
 	for (int i = 7; i >= 0; i--)
 	{
@@ -73,7 +73,7 @@ void DecToBit(int dec, int* bits) {
 }
 
 // Convertie un tableau de bit ( int[8] ) en une valeur décimale
-int BitToDec(int* bits) {
+int bitToDec(int* bits) {
 
 	int result = 0;
 
@@ -88,21 +88,21 @@ int BitToDec(int* bits) {
 }
 
 // Calcul le hash pour effectuer la stéganographie
-int Hash(int posHiddenbit, int nbLSB = 4) {
+int hash(int posHiddenbit, int nbLSB = 4) {
 
 	return posHiddenbit % nbLSB;
 
 }
 
 // Insertion des bit dans les bon emplacement via la caclul d'un hash
-void InsertBitWithHash(int* bits, int* Bbit, int* Gbit, int* Rbit) {
+void insertBitWithHash(int* bits, int* Bbit, int* Gbit, int* Rbit) {
 
 	// Test si le bit à insérer est :
 	for (int i = 0; i < 8; i++)
 	{
 		// dans la couleur Rouge
 		if (i >= 0 && i < 3) {
-			int h = Hash(i);
+			int h = hash(i);
 			for (int j = 0; j < 8; j++)
 			{
 				if (j == h) {
@@ -112,7 +112,7 @@ void InsertBitWithHash(int* bits, int* Bbit, int* Gbit, int* Rbit) {
 		}
 		// dans la couleur Bleu ( Green )
 		if (i >= 3 && i < 6) {
-			int h = Hash(i);
+			int h = hash(i);
 			for (int j = 0; j < 8; j++)
 			{
 				if (j == h) {
@@ -122,7 +122,7 @@ void InsertBitWithHash(int* bits, int* Bbit, int* Gbit, int* Rbit) {
 		}
 		// dans la couleur Bleu
 		if (i >= 6 && i < 8) {
-			int h = Hash(i);
+			int h = hash(i);
 			for (int j = 0; j < 8; j++)
 			{
 				if (j == h) {
@@ -135,7 +135,7 @@ void InsertBitWithHash(int* bits, int* Bbit, int* Gbit, int* Rbit) {
 }
 
 // Copie un tableau dans un autre
-void TabCopy(int* out, int* in) {
+void tabCopy(int* out, int* in) {
 
 	for (int i = 0; i < 8; i++)
 	{
@@ -144,11 +144,11 @@ void TabCopy(int* out, int* in) {
 
 }
 
-void SteganoAt(int i, int j, int value, cv::Mat& img, cv::Mat& result, bool asOffset = false, int offset = 0) {
+void steganoAt(int i, int j, int value, cv::Mat& img, cv::Mat& result, bool asOffset = false, int offset = 0) {
 
 	// insertion du nombre de lignes
 	int bits[8];
-	DecToBit(value, bits);
+	decToBit(value, bits);
 	int ValRGB[3];
 	if (asOffset) {
 		ValRGB[0] = img.at<cv::Vec3b>(i, j - offset)[0];
@@ -164,29 +164,29 @@ void SteganoAt(int i, int j, int value, cv::Mat& img, cv::Mat& result, bool asOf
 
 	// Récupération des bits de l'image source
 	int B[8], G[8], R[8];
-	DecToBit(ValRGB[0], B);
-	DecToBit(ValRGB[1], G);
-	DecToBit(ValRGB[2], R);
+	decToBit(ValRGB[0], B);
+	decToBit(ValRGB[1], G);
+	decToBit(ValRGB[2], R);
 
 	// Copy dans le tableau finale
 	int Rbit[8], Gbit[8], Bbit[8];
-	TabCopy(Bbit, B);
-	TabCopy(Gbit, G);
-	TabCopy(Rbit, R);
+	tabCopy(Bbit, B);
+	tabCopy(Gbit, G);
+	tabCopy(Rbit, R);
 
 	// insertion de la valeur de row dans les bits de couleur de lena
-	InsertBitWithHash(bits, Bbit, Gbit, Rbit);
+	insertBitWithHash(bits, Bbit, Gbit, Rbit);
 
 	// Transformation de bits en décimal et affectation de la valeur à chaque couleur
-	int newB = BitToDec(Bbit);
+	int newB = bitToDec(Bbit);
 	if (asOffset) result.at<cv::Vec3b>(i, j - offset)[0] = newB;
 	else result.at<cv::Vec3b>(i, j)[0] = newB;
 
-	int newG = BitToDec(Gbit);
+	int newG = bitToDec(Gbit);
 	if (asOffset) result.at<cv::Vec3b>(i, j - offset)[1] = newG;
 	else result.at<cv::Vec3b>(i, j)[1] = newG;
 
-	int newR = BitToDec(Rbit);
+	int newR = bitToDec(Rbit);
 	if (asOffset) result.at<cv::Vec3b>(i, j - offset)[2] = newR;
 	else result.at<cv::Vec3b>(i, j)[2] = newR;
 
@@ -244,19 +244,19 @@ int main(int argc, char* argv[]) {
 	}
 
 	// Ajout des valeurs pour la quantité de lignes et de colonnes
-	SteganoAt(0, 0, rowoffset, img1, stegano);
-	SteganoAt(0, 1, coloffset, img1, stegano);
+	steganoAt(0, 0, rowoffset, img1, stegano);
+	steganoAt(0, 1, coloffset, img1, stegano);
 
 	// Ajout de la valeur pour les lignes
 	temp = row;
 	for (int i = 2; i < 2 + rowoffset; i++)
 	{
 		if (temp > 255) {
-			SteganoAt(0, i, 255, img1, stegano);
+			steganoAt(0, i, 255, img1, stegano);
 			temp -= 255;
 		}
 		else {
-			if(temp > 0) SteganoAt(0, i, temp, img1, stegano);
+			if(temp > 0) steganoAt(0, i, temp, img1, stegano);
 		}
 	}
 
@@ -265,11 +265,11 @@ int main(int argc, char* argv[]) {
 	for (int i = 2 + rowoffset; i < 2 + coloffset + rowoffset; i++)
 	{
 		if (temp > 255) {
-			SteganoAt(0, i, 255, img1, stegano);
+			steganoAt(0, i, 255, img1, stegano);
 			temp -= 255;
 		}
 		else {
-			if(temp > 0) SteganoAt(0, i, temp, img1, stegano);
+			if(temp > 0) steganoAt(0, i, temp, img1, stegano);
 		}
 	}
 
@@ -286,9 +286,9 @@ int main(int argc, char* argv[]) {
 			// effectue la stégano en appelant avec les bon paramaètres la fonction suivante
 
 			// if i == 0, pas de offset car les valeurs doivent être décalé pour pas écraser les valeurs de Mat rentrer précedemment
-			if (0 == i) SteganoAt(i, j, val_img2, img1, stegano);
+			if (0 == i) steganoAt(i, j, val_img2, img1, stegano);
 			// else, offset pour remmetre les valeurs à partir du début de l'image
-			else SteganoAt(i, j, val_img2, img1, stegano, true, offset);
+			else steganoAt(i, j, val_img2, img1, stegano, true, offset);
 
 		}
 	}
