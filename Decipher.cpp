@@ -57,7 +57,7 @@ void recupBitWithHash(int bits[], int Bbit[], int Gbit[], int Rbit[]) {
 	for (int i = 0; i < 8; i++)
 	{
 		// dans la couleur Rouge
-		if (0 <= i < 3) {
+		if (i >= 0 && i < 3) {
 			int h = Hash(i);
 			for (int j = 0; j < 8; j++)
 			{
@@ -67,7 +67,7 @@ void recupBitWithHash(int bits[], int Bbit[], int Gbit[], int Rbit[]) {
 			}
 		}
 		// dans la couleur Bleu ( Green )
-		if (3 <= i < 6) {
+		if (i >= 3 && i < 6) {
 			int h = Hash(i);
 			for (int j = 0; j < 8; j++)
 			{
@@ -77,7 +77,7 @@ void recupBitWithHash(int bits[], int Bbit[], int Gbit[], int Rbit[]) {
 			}
 		}
 		// dans la couleur Bleu
-		if (6 <= i < 8) {
+		if (i >= 6 && i < 8) {
 			int h = Hash(i);
 			for (int j = 0; j < 8; j++)
 			{
