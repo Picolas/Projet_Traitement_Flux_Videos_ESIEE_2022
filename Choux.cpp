@@ -2,7 +2,7 @@
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
-#include<opencv2/core/utility.hpp>
+#include <opencv2/core/utility.hpp>
 #include <string>
 
 using namespace std;
@@ -20,7 +20,13 @@ void onMouse(int event, int x,int y, int flags, void* params);
 string getFilename(int nbArg, char* arguments[]) {
     const string keys =
         "{help h usage ? |      | print this message   }"
-        "{@video        |choux.mp4| video for capture   }"
+        "{@image1        |choux.mp4| image1 for compare   }"
+        "{@image2        |<none>| image2 for compare   }"
+        "{@repeat        |1     | number               }"
+        "{path           |.     | path to file         }"
+        "{fps            | -1.0 | fps for output video }"
+        "{N count        |100   | count of objects     }"
+        "{ts timestamp   |      | use time stamp       }"
         ;
 
     cv::CommandLineParser parser(nbArg, arguments, keys);
@@ -63,7 +69,7 @@ void frameLoop(cv::VideoCapture capture) {
     int framerate = capture.get(cv::CAP_PROP_FPS);
     int frame_width = capture.get(cv::CAP_PROP_FRAME_WIDTH);
     int frame_height = capture.get(cv::CAP_PROP_FRAME_HEIGHT);
-    cv::VideoWriter output("choux_filtre.avi", fourcc, framerate, cv::Size(frame_width, frame_height));
+    cv::VideoWriter output("choux_filtre.ts", fourcc, framerate, cv::Size(frame_width, frame_height));
     cv::namedWindow("output", 1);
     cv::namedWindow("filtre", 2);
     
@@ -73,15 +79,15 @@ void frameLoop(cv::VideoCapture capture) {
 
         cv::Mat framef;
         capture >> frame;
+
+        if (frame.empty())
+            break;
+
         cv::cvtColor(frame, frameHsv, cv::COLOR_BGR2HSV);
         img = frame;
         cv::inRange(frameHsv, cv::Scalar(35, 16, 100), cv::Scalar(72, 160, 255), frameHsv);
         cv::copyTo(frame, framef, frameHsv);
         
-
-        if (frame.empty())
-            break;
-
         output<<framef;
 
         cv::imshow("output", frame);
@@ -95,6 +101,9 @@ void frameLoop(cv::VideoCapture capture) {
 
     output.release();
 
+    std::cout << rename("choux_filtre.ts", "choux_filtre.avi");
+    
+
 }
 
 int main(int argc, char* argv[]) {
@@ -106,9 +115,6 @@ int main(int argc, char* argv[]) {
 
     // Loop principale
     frameLoop(capture);
-    
-
-    cv::waitKey(0);
 }
 
 void onMouse(int event,int x,int y,int flags,void* params){

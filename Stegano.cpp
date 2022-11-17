@@ -51,9 +51,10 @@ st_bits convert(uchar data) {
 // Convertie une valeur décimale en bit ( stocké dans un tableau de int[8] )
 void decToBit(int dec, int* bits) {
 
+	int temp = dec;
 	for (int i = 7; i >= 0; i--)
 	{
-		// test si la valeur decimale est supérieur à 2^i
+		// test si la valeur decimale est inférieur à 2^i
 		if (dec < pow(2, i)) {
 			bits[i] = 0;
 		}
@@ -144,32 +145,24 @@ void tabCopy(int* out, int* in) {
 
 }
 
-void steganoAt(int i, int j, int value, cv::Mat& img, cv::Mat& result, bool asOffset = false, int offset = 0) {
+void steganoAt(int i, int j, int value, cv::Mat& img, cv::Mat& result) {
 
 	// insertion du nombre de lignes
 	int bits[8];
 	decToBit(value, bits);
-	int ValRGB[3];
-	if (asOffset) {
-		ValRGB[0] = img.at<cv::Vec3b>(i, j - offset)[0];
-		ValRGB[1] = img.at<cv::Vec3b>(i, j - offset)[1];
-		ValRGB[2] = img.at<cv::Vec3b>(i, j - offset)[2];
-	}
-	else {
-		ValRGB[0] = img.at<cv::Vec3b>(i, j)[0];
-		ValRGB[1] = img.at<cv::Vec3b>(i, j)[1];
-		ValRGB[2] = img.at<cv::Vec3b>(i, j)[2];
-
-	}
+	int ValBGR[3];
+	ValBGR[0] = img.at<cv::Vec3b>(i, j)[0];
+	ValBGR[1] = img.at<cv::Vec3b>(i, j)[1];
+	ValBGR[2] = img.at<cv::Vec3b>(i, j)[2];
 
 	// Récupération des bits de l'image source
 	int B[8], G[8], R[8];
-	decToBit(ValRGB[0], B);
-	decToBit(ValRGB[1], G);
-	decToBit(ValRGB[2], R);
+	decToBit(ValBGR[0], B);
+	decToBit(ValBGR[1], G);
+	decToBit(ValBGR[2], R);
 
 	// Copy dans le tableau finale
-	int Rbit[8], Gbit[8], Bbit[8];
+	int Bbit[8], Gbit[8], Rbit[8];
 	tabCopy(Bbit, B);
 	tabCopy(Gbit, G);
 	tabCopy(Rbit, R);
@@ -179,16 +172,13 @@ void steganoAt(int i, int j, int value, cv::Mat& img, cv::Mat& result, bool asOf
 
 	// Transformation de bits en décimal et affectation de la valeur à chaque couleur
 	int newB = bitToDec(Bbit);
-	if (asOffset) result.at<cv::Vec3b>(i, j - offset)[0] = newB;
-	else result.at<cv::Vec3b>(i, j)[0] = newB;
+	result.at<cv::Vec3b>(i, j)[0] = newB;
 
 	int newG = bitToDec(Gbit);
-	if (asOffset) result.at<cv::Vec3b>(i, j - offset)[1] = newG;
-	else result.at<cv::Vec3b>(i, j)[1] = newG;
+	result.at<cv::Vec3b>(i, j)[1] = newG;
 
 	int newR = bitToDec(Rbit);
-	if (asOffset) result.at<cv::Vec3b>(i, j - offset)[2] = newR;
-	else result.at<cv::Vec3b>(i, j)[2] = newR;
+	result.at<cv::Vec3b>(i, j)[2] = newR;
 
 }
 
@@ -213,6 +203,7 @@ int main(int argc, char* argv[]) {
 	// crée l'image en niveau de gris à insérer à partir de l'image 2
 	cv::cvtColor(img2, img2_gray, cv::COLOR_BGR2GRAY);
 
+	std::cout << "row gray : " << img2_gray.rows << " et col gray : " << img2_gray.cols << std::endl;
 
 	// Insertion des valeurs de Mat de l'image 2 dans image 1
 
@@ -281,14 +272,14 @@ int main(int argc, char* argv[]) {
 		for (int j = offset; j < col + offset; j++) {
 
 			// récup la valeur décimal du gray pour chaque pixel
-			int val_img2 = img2.at<cv::int8_t>(i, j - offset);
+			int val_img2 = img2_gray.at<cv::uint8_t>(i, j - offset);
 
 			// effectue la stégano en appelant avec les bon paramaètres la fonction suivante
 
 			// if i == 0, pas de offset car les valeurs doivent être décalé pour pas écraser les valeurs de Mat rentrer précedemment
 			if (0 == i) steganoAt(i, j, val_img2, img1, stegano);
 			// else, offset pour remmetre les valeurs à partir du début de l'image
-			else steganoAt(i, j, val_img2, img1, stegano, true, offset);
+			else steganoAt(i, j - offset, val_img2, img1, stegano);
 
 		}
 	}

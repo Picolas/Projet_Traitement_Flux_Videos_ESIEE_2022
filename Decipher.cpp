@@ -24,7 +24,7 @@ void decToBit(int dec, int* bits) {
 			// si la valeur moins 2^i est supérieur à 0 alors on peut le retirer -> 1 à cet emplacement
 			if ((dec - pow(2, i)) >= 0) {
 				bits[i] = 1;
-				dec = dec - pow(2, i);
+				dec = dec - (int) pow(2, i);
 			}
 			// sinon 0
 			else {
@@ -66,7 +66,7 @@ void recupBitWithHash(int bits[], int Bbit[], int Gbit[], int Rbit[]) {
 				}
 			}
 		}
-		// dans la couleur Bleu ( Green )
+		// dans la couleur Vert ( Green )
 		if (i >= 3 && i < 6) {
 			int h = Hash(i);
 			for (int j = 0; j < 8; j++)
@@ -136,12 +136,14 @@ int main(int argc, char* argv[]) {
 		col += recupDecAt(0, i, source);
 	}
 
+	offset += rowOffset + colOffset;
+
 	cv::Mat recover = cv::Mat(row, col, CV_8U);
 
 	for (int i = 0; i < row; i++) {
 		if (0 == i) {
-			for (int j = offset + rowOffset + colOffset; j < col; j++) {
-				recover.at<cv::int8_t>(i, j + offset + rowOffset + colOffset) = recupDecAt(i, j + offset + rowOffset + colOffset, source);
+			for (int j = offset; j < col + offset; j++) {
+				recover.at<cv::int8_t>(i, j - offset) = recupDecAt(i, j, source);
 			}
 		}
 		else {
@@ -149,7 +151,6 @@ int main(int argc, char* argv[]) {
 				recover.at<cv::int8_t>(i, j) = recupDecAt(i, j, source);
 			}
 		}
-		
 	}
 
 	cv::imshow("recovered image" , recover);
