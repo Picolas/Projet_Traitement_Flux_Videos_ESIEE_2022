@@ -11,7 +11,7 @@ Le projet est accessible en 3 méthodes :
 	- cloner le projet
 	- choisir entre les deux méthodes suivantes
 
-- Les exécutables et les fichiers associés
+- Les exécutables et les fichiers associés dans le dossier Executable
 	- lancer une invite de commande depuis le dossier courant
 	- executer via les arguments suivants :
 		- choux : choux.exe choux.mp4
