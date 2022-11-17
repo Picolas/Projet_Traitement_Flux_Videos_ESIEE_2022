@@ -20,13 +20,7 @@ void onMouse(int event, int x,int y, int flags, void* params);
 string getFilename(int nbArg, char* arguments[]) {
     const string keys =
         "{help h usage ? |      | print this message   }"
-        "{@image1        |choux.mp4| image1 for compare   }"
-        "{@image2        |<none>| image2 for compare   }"
-        "{@repeat        |1     | number               }"
-        "{path           |.     | path to file         }"
-        "{fps            | -1.0 | fps for output video }"
-        "{N count        |100   | count of objects     }"
-        "{ts timestamp   |      | use time stamp       }"
+        "{@video        |choux.mp4| video for capture   }"
         ;
 
     cv::CommandLineParser parser(nbArg, arguments, keys);
@@ -69,8 +63,7 @@ void frameLoop(cv::VideoCapture capture) {
     int framerate = capture.get(cv::CAP_PROP_FPS);
     int frame_width = capture.get(cv::CAP_PROP_FRAME_WIDTH);
     int frame_height = capture.get(cv::CAP_PROP_FRAME_HEIGHT);
-    cv::VideoWriter output("choux_filtre.avi", cv::VideoWriter::fourcc('M','J','P','G'), framerate, cv::Size(frame_width, frame_height));
-    //output.fourcc(cc1, cc2, cc3, cc4);
+    cv::VideoWriter output("choux_filtre.avi", fourcc, framerate, cv::Size(frame_width, frame_height));
     cv::namedWindow("output", 1);
     cv::namedWindow("filtre", 2);
     
@@ -126,7 +119,5 @@ void onMouse(int event,int x,int y,int flags,void* params){
   
   if (event == cv::EVENT_LBUTTONDOWN) {
     std::cout << "x : " << x << " y : " << y << std::endl << " color : " << color << "hsv : " << hsv << std::endl;
-    //  std::cout <<(int) hsv.at<cv::Vec3b>(0, 0).val[0] << std::endl;
-    // 
   }
 }
