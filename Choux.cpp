@@ -2,7 +2,7 @@
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
-#include<opencv2/core/utility.hpp>
+#include <opencv2/core/utility.hpp>
 #include <string>
 
 using namespace std;
@@ -64,6 +64,12 @@ int eventKey() {
 void frameLoop(cv::VideoCapture capture) {
     cv::Mat frame;
     cv::Mat frameHsv;
+    int fourcc = capture.get(cv::CAP_PROP_FOURCC);
+   
+    int framerate = capture.get(cv::CAP_PROP_FPS);
+    int frame_width = capture.get(cv::CAP_PROP_FRAME_WIDTH);
+    int frame_height = capture.get(cv::CAP_PROP_FRAME_HEIGHT);
+    cv::VideoWriter output("choux_filtre.ts", fourcc, framerate, cv::Size(frame_width, frame_height));
     cv::namedWindow("output", 1);
     cv::namedWindow("filtre", 2);
     
@@ -73,22 +79,31 @@ void frameLoop(cv::VideoCapture capture) {
 
         cv::Mat framef;
         capture >> frame;
-        cv::cvtColor(frame, frameHsv, cv::COLOR_BGR2HSV);
-        img = frame;
-        cv::inRange(frameHsv, cv::Scalar(35, 16, 100), cv::Scalar(72, 160, 255), frameHsv);
-        cv::copyTo(frame, framef, frameHsv);
 
         if (frame.empty())
             break;
 
+        cv::cvtColor(frame, frameHsv, cv::COLOR_BGR2HSV);
+        img = frame;
+        cv::inRange(frameHsv, cv::Scalar(35, 16, 100), cv::Scalar(72, 160, 255), frameHsv);
+        cv::copyTo(frame, framef, frameHsv);
+        
+        output<<framef;
+
         cv::imshow("output", frame);
         cv::imshow("filtre", framef);
-        
+
         // Event key principale
         int key = eventKey();
         if (key == 0)
             break;
     }
+
+    output.release();
+
+    std::cout << rename("choux_filtre.ts", "choux_filtre.avi");
+    
+
 }
 
 int main(int argc, char* argv[]) {
@@ -96,12 +111,10 @@ int main(int argc, char* argv[]) {
     string filename = getFilename(argc, argv);
 
     cv::VideoCapture capture = loadFrames(filename);
+    cv::VideoWriter output;
 
     // Loop principale
     frameLoop(capture);
-    
-
-    cv::waitKey(0);
 }
 
 void onMouse(int event,int x,int y,int flags,void* params){
@@ -112,7 +125,5 @@ void onMouse(int event,int x,int y,int flags,void* params){
   
   if (event == cv::EVENT_LBUTTONDOWN) {
     std::cout << "x : " << x << " y : " << y << std::endl << " color : " << color << "hsv : " << hsv << std::endl;
-    //  std::cout <<(int) hsv.at<cv::Vec3b>(0, 0).val[0] << std::endl;
-    // 
   }
 }
