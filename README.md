@@ -3,7 +3,6 @@ Projet final en traitement de flux vidéo, réalisé en C++ avec OpenCV
 
 réalisé par Thomas AGNOLA, Raphaël DARMON, Alexis LI et Nicolas PIPLARD.
 
-==========================
 Mode d'emploi
 ==========================
 Le projet est accessible en 3 méthodes :
@@ -33,7 +32,6 @@ Stégano demande deux noms d'images, la première étant l'image originale, et l
 Decipher demande le nom de l'image cryptée en argument.
 
 
-==========================
 Explications sur la solution logicielle mise en oeuvre
 ==========================
 
